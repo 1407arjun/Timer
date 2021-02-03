@@ -17,6 +17,8 @@ public class MainActivity extends AppCompatActivity {
     TextView timerDisplay;
     Button control;
     Button pause;
+    Button resetTime;
+    Button addMin;
     boolean counterOn = false;
     boolean paused = false;
     CountDownTimer countDownTimer;
@@ -44,13 +46,18 @@ public class MainActivity extends AppCompatActivity {
         control = findViewById(R.id.startstop);
         control.setText("Start");
         pause = findViewById(R.id.pause);
+        resetTime = findViewById(R.id.resetButton);
+        resetTime.setEnabled(false);
         pause.setText("Pause");
         pause.setEnabled(false);
+        addMin = findViewById(R.id.plusOne);
+        addMin.setVisibility(View.INVISIBLE);
         hrsSeekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 hrs = progress;
                 dispUpdate(format(hrs), format(mins), format(secs));
+                resetEnabler(hrs,mins,secs);
             }
 
             @Override
@@ -68,6 +75,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 mins = progress;
                 dispUpdate(format(hrs), format(mins), format(secs));
+                resetEnabler(hrs,mins,secs);
             }
 
             @Override
@@ -85,6 +93,7 @@ public class MainActivity extends AppCompatActivity {
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
                 secs = progress;
                 dispUpdate(format(hrs), format(mins), format(secs));
+                resetEnabler(hrs,mins,secs);;
             }
 
             @Override
@@ -105,6 +114,7 @@ public class MainActivity extends AppCompatActivity {
         }
         else if (counterOn == false) {
             counterOn = true;
+            addMin.setVisibility(View.VISIBLE);
             pause.setEnabled(true);
             hrsSeekBar.setEnabled(false);
             minsSeekBar.setEnabled(false);
@@ -144,6 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void reset(){
         dispUpdate(format(hrs), format(mins), format(secs));
+        addMin.setVisibility(View.INVISIBLE);
         hrsSeekBar.setProgress(hrs);
         minsSeekBar.setProgress(mins);
         secsSeekBar.setProgress(secs);
@@ -192,5 +203,54 @@ public class MainActivity extends AppCompatActivity {
             paused = false;
             pause.setText("Pause");
         }
+    }
+
+    public void resetTimer(View view){
+        timerDisplay.setText("00 : 00 : 00");
+        hrsSeekBar.setProgress(0);
+        minsSeekBar.setProgress(0);
+        secsSeekBar.setProgress(0);
+        if (counterOn) {
+            countDownTimer.cancel();
+        }
+        control.setText("Start");
+        addMin.setVisibility(View.INVISIBLE);
+        counterOn = false;
+        paused  = false;
+        pause.setEnabled(false);
+        pause.setText("Pause");
+        hrsSeekBar.setEnabled(true);
+        minsSeekBar.setEnabled(true);
+        secsSeekBar.setEnabled(true);
+        resetTime.setEnabled(false);
+    }
+
+    public void resetEnabler(int hrs, int mins, int secs){
+        if (hrs == 0 && mins == 0 && secs == 0){
+            resetTime.setEnabled(false);
+        }else{
+            resetTime.setEnabled(true);
+        }
+    }
+
+    public void addMinute(View view){
+        countDownTimer.cancel();
+        min++;
+        dispUpdate(format(hrs), format(mins), format(secs));
+        countDownTimer = new CountDownTimer((hr * 3600 + min * 60 + sec) * 1000 + 100, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerUpdate((int) millisUntilFinished / 1000);
+            }
+
+            @Override
+            public void onFinish() {
+                timerDisplay.setText("00 : 00 : 00");
+                MediaPlayer mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.schoolbell);
+                mediaPlayer.start();
+                Toast.makeText(MainActivity.this, "Time's up!", Toast.LENGTH_LONG).show();
+                reset();
+            }
+        }.start();
     }
 }
